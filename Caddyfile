@@ -1,0 +1,27 @@
+{
+    admin off
+}
+
+reviveshop.example.com {
+    reverse_proxy django:9000
+}
+
+api.reviveshop.example.com {
+    reverse_proxy flask:8000
+}
+
+themeshop.reviveshop.example.com {
+    reverse_proxy https://themeshop:8443 {
+        transport http {
+            tls_insecure_skip_verify
+        }
+    }
+}
+
+:80 {
+    reverse_proxy django:9000
+}
+
+:443 {
+    reverse_proxy django:9000
+}

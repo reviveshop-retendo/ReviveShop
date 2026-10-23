@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  django:
+    build: .
+    command: .venv/bin/python manage.py runserver_plus 0.0.0.0:9000 --cert-file /app/certs/cert.pem --key-file /app/certs/key.pem
+    volumes:
+      - .:/app
+      - ./certs:/app/certs
+    ports:
+      - "9000:9000"
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  flask:
+    build: .
+    command: .venv/bin/python -m flask --app main run -h 0.0.0.0 -p 8000 --cert /app/certs/cert.pem --key /app/certs/key.pem
+    volumes:
+      - .:/app
+      - ./certs:/app/certs
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  mitmproxy:
+    build: .
+    command: .venv/bin/python -m mitmproxy --listen-host 0.0.0.0 --listen-port 8888 --ssl-insecure --set tls_version_client_min=TLS1 --set connection_strategy=lazy -s connect-kit/mitmproxy/rewrite.py
+    volumes:
+      - .:/app
+    ports:
+      - "8888:8888"
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  control-panel:
+    build: .
+    command: .venv/bin/python control-panel/app.py
+    volumes:
+      - .:/app
+    ports:
+      - "5001:5001"
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  themeshop:
+    build: ./theme-shop-revival
+    command: node server/index.js
+    environment:
+      - PORT=8443
+    volumes:
+      - ./theme-shop-revival:/app
+    ports:
+      - "8443:8443"
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - django
+      - flask
+      - themeshop
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:
