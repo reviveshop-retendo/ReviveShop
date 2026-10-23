@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block heading %}3DS &middot; Owned titles{% endblock %}
+{% block content %}
+<p class="muted">
+  An owned title shows up in the console&rsquo;s <span class="mono">My Titles</span>
+  and reports <span class="mono">title_owned</span> in the shop, which is also
+  what the CDN checks before it will serve the content.
+</p>
+{% if not consoles %}
+<p class="muted">No consoles registered yet. Ownership needs at least one console.</p>
+{% endif %}
+<form method="post" class="row" style="margin-bottom:1rem">
+  <select name="title">
+    {% for t in titles %}
+    <option value="{{ t.id }}">{{ t.name }} <span class="mono">({{ t.tid }})</span></option>
+    {% endfor %}
+  </select>
+  <select name="console">
+    <option value="all">All consoles</option>
+    {% for c in consoles %}
+    <option value="{{ c.id }}">{{ c.consoleid }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn primary" name="action" value="grant">Grant ownership</button>
+  <button class="btn danger" name="action" value="revoke">Revoke</button>
+</form>
+<table>
+  <tr><th>TID</th><th>Name</th><th>Ver</th><th>Owned by</th><th></th></tr>
+  {% for t in titles %}
+  {% set holders = owned.get(t.id, {}) %}
+  <tr>
+    <td class="mono">{{ t.tid }}</td>
+    <td>{{ t.name }}</td>
+    <td class="mono">{{ '%08x'|format(t.version) }}</td>
+    <td>
+      {% if not consoles %}
+        <span class="muted">n/a</span>
+      {% elif holders %}
+        {% for cpk, tik in holders.items() %}
+        <span class="mono">{{ cpk }}</span>{% if not loop.last %}, {% endif %}
+        {% endfor %}
+      {% else %}
+        <span class="muted">nobody</span>
+      {% endif %}
+    </td>
+    <td class="row">
+      <form method="post" action="{{ url_for('ds_title_owned', pk=t.id) }}">
+        <input type="hidden" name="next" value="{{ url_for('ds_owned') }}">
+        <select name="console">
+          <option value="all">All</option>
+          {% for c in consoles %}<option value="{{ c.id }}">{{ c.consoleid }}</option>{% endfor %}
+        </select>
+        {% if holders %}
+        <button class="btn small danger" name="grant" value="0">Revoke</button>
+        {% else %}
+        <button class="btn small primary" name="grant" value="1">Grant</button>
+        {% endif %}
+      </form>
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="5" class="muted">No titles yet.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block heading %}Maintenance{% endblock %}
+{% block content %}
+<div class="card">
+  <h3>Shop maintenance mode</h3>
+  <p class="muted">When enabled, the 3DS shop shows <code>MAINTENANCE_MSG</code> and blocks access until you turn it back off.</p>
+  <p>Current status:
+    <span class="pill {{ 'down' if on else 'up' }}">{{ 'IN_MAINTENANCE = True' if on else 'IN_MAINTENANCE = False' }}</span>
+  </p>
+  <div class="row">
+    <form method="post">
+      <input type="hidden" name="enabled" value="{{ '0' if on else '1' }}">
+      <button class="btn {{ 'primary' if on }}">{{ 'Turn maintenance off' if on else 'Turn maintenance on' }}</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block heading %}Wii &middot; WiiMart{% endblock %}
+{% block content %}
+<div class="card" style="margin-bottom:16px">
+  <div class="row" style="justify-content:space-between">
+    <div class="row">
+      <span class="pill {{ 'up' if containers and 'Up' in containers[0].status else 'down' }}">containers: {{ containers|length }}</span>
+    </div>
+    <div class="row">
+      {% for a in ['start','restart','stop'] %}
+      <form method="post" action="{{ url_for('wii_control', action=a) }}">
+        <button class="btn small {{ 'primary' if a=='start' }}">{{ a|capitalize }}</button>
+      </form>
+      {% endfor %}
+    </div>
+  </div>
+  <table style="margin-top:12px">
+    <tr><th>Container</th><th>Status</th><th>Image</th></tr>
+    {% for c in containers %}<tr><td class="mono">{{ c.name }}</td><td>{{ c.status }}</td><td class="muted mono">{{ c.image }}</td></tr>
+    {% else %}<tr><td colspan="3" class="muted">Docker not available or no containers.</td></tr>{% endfor %}
+  </table>
+</div>
+
+<div class="card" style="margin-bottom:16px">
+  <h3>Shop titles (service_titles)</h3>
+  <form method="post" action="{{ url_for('wii_title_save') }}" class="row" style="align-items:flex-end">
+    <input type="hidden" name="item_id" value="">
+    <div class="f"><label>Price code</label><input name="price_code" type="number" required value="1"></div>
+    <div class="f"><label>Price (points)</label><input name="price" type="number" required value="0"></div>
+    <div class="f"><label>Title ID</label><input name="title_id" required style="min-width:180px"></div>
+    <div class="f"><label>Reference ID</label><input name="reference_id" style="min-width:180px"></div>
+    <button class="btn primary">Add</button>
+  </form>
+  <table style="margin-top:12px">
+    <tr><th>Item</th><th>Price code</th><th>Price</th><th>Title ID</th><th>Reference</th><th></th></tr>
+    {% for t in titles %}
+    <tr>
+      <td>{{ t.item_id }}</td><td>{{ t.price_code }}</td><td>{{ t.price }}</td>
+      <td class="mono">{{ t.title_id }}</td><td class="mono badge">{{ t.reference_id }}</td>
+      <td class="row">
+        <form method="post" action="{{ url_for('wii_title_delete', item_id=t.item_id) }}" onsubmit="return confirm('Delete?')">
+          <button class="btn small danger">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="muted">{{ titles[0].error if titles and titles[0].error else 'No titles in the WiiMart database yet.' }}</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h3>Accounts (userbase)</h3>
+    <table>
+      <tr><th>Account</th><th>Device</th><th>Region</th><th>Points</th></tr>
+      {% for a in accounts %}<tr><td>{{ a.account_id }}</td><td class="mono badge">{{ a.device_id }}</td><td>{{ a.region }}/{{ a.country }}</td><td>{{ a.points }}</td></tr>
+      {% else %}<tr><td colspan="4" class="muted">No accounts.</td></tr>{% endfor %}
+    </table>
+  </div>
+  <div class="card">
+    <h3>Owned titles</h3>
+    <table>
+      <tr><th>Account</th><th>Title ID</th><th>Ver</th></tr>
+      {% for o in owned %}<tr><td>{{ o.account_id }}</td><td class="mono">{{ o.title_id }}</td><td>{{ o.version }}</td></tr>
+      {% else %}<tr><td colspan="3" class="muted">No owned titles.</td></tr>{% endfor %}
+    </table>
+  </div>
+</div>
+{% endblock %}

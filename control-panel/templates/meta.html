@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block heading %}3DS &middot; Store metadata{% endblock %}
+{% block content %}
+<div class="tabs">
+  {% set tabs = [('category','Categories'), ('genre','Genres'), ('publisher','Publishers'), ('platform','Platforms'), ('motd','Home ticker (telops)')] %}
+  {% for m, label in tabs %}
+    <a class="{{ 'active' if model_name==m }}" href="{{ url_for('ds_meta', model_name=m) }}">{{ label }}</a>
+  {% endfor %}
+</div>
+
+<div class="card" style="margin-bottom:16px">
+  <h3 id="formtitle">Add / edit {{ model_name }}</h3>
+  <form method="post" class="row" id="metaform" style="align-items:flex-end">
+    {% for f, label, typ in specs %}
+      {% if f in ('icon_url', 'banner_url') %}
+        <div class="f imgfield">
+          <label>{{ label }}</label>
+          <input name="{{ f }}" style="min-width:200px">
+          <input type="file" accept="image/*" data-preset="{{ 'cat_icon' if f=='icon_url' else 'cat_banner' }}"
+                 onchange="uploadImage(this,'{{ f }}')">
+          <div class="upstatus badge"></div>
+          <img data-preview alt="" style="display:none;max-height:70px;margin-top:4px;border-radius:6px;border:1px solid var(--line)">
+        </div>
+      {% else %}
+      <div class="f">
+        <label>{{ label }}</label>
+        {% if typ == 'bool' %}
+          <input type="checkbox" name="{{ f }}">
+        {% elif f == 'content' %}
+          <textarea name="{{ f }}" rows="2" style="min-width:260px"></textarea>
+        {% else %}
+          <input name="{{ f }}" {{ 'type=number' if typ=='int' }}>
+        {% endif %}
+      </div>
+      {% endif %}
+    {% endfor %}
+    <button class="btn primary">Save</button>
+    <button type="reset" class="btn" onclick="document.getElementById('formtitle').textContent='Add / edit {{ model_name }}'">Clear</button>
+  </form>
+</div>
+
+<table>
+  <tr>{% for f, label, typ in specs %}<th>{{ label }}</th>{% endfor %}<th></th></tr>
+  {% for row in rows %}
+  <tr>
+    {% for f, label, typ in specs %}
+      <td class="{{ 'mono' if typ=='int' }}">{{ row[f] }}</td>
+    {% endfor %}
+    <td class="row">
+      <button class="btn small editbtn" data-row='{{ row|tojson }}'
+        onclick="document.getElementById('formtitle').textContent='Edit {{ model_name }} #{{ row[specs[0][0]] }}'">Edit</button>
+      <form method="post" action="{{ url_for('ds_meta_delete', model_name=model_name, pk=row[specs[0][0]]) }}" onsubmit="return confirm('Delete?')">
+        <button class="btn small danger">Delete</button>
+      </form>
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="{{ specs|length + 1 }}" class="muted">No rows.</td></tr>
+  {% endfor %}
+</table>
+
+<script>
+document.querySelectorAll('.editbtn').forEach(function(b){
+  b.addEventListener('click', function(){
+    var d = JSON.parse(b.dataset.row);
+    for (var k in d){
+      var el = document.querySelector('#metaform [name="'+k+'"]');
+      if(!el) continue;
+      if(el.type === 'checkbox') el.checked = !!d[k];
+      else el.value = (d[k] === null ? '' : d[k]);
+      var prev = el.closest('.imgfield') && el.closest('.imgfield').querySelector('[data-preview]');
+      if(prev && d[k]){ prev.src = d[k]; prev.style.display = 'block'; }
+    }
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+});
+</script>
+{% endblock %}

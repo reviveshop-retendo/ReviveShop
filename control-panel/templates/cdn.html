@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block heading %}3DS &middot; Content CDN{% endblock %}
+{% block content %}
+<table>
+  <tr><th>Title ID</th><th>Files</th><th>Total</th><th>Path</th></tr>
+  {% for f in folders %}
+  <tr>
+    <td class="mono">{{ f.tid }}</td>
+    <td>
+      {% for file in f.files %}<div class="mono badge">{{ file.name }} &middot; {{ file.human }}</div>{% endfor %}
+    </td>
+    <td>{{ f.human }}</td>
+    <td class="muted mono badge">{{ f.path }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="4" class="muted">CDN empty.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

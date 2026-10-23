@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block heading %}3DS &middot; Title images{% endblock %}
+{% block content %}
+<p class="muted">Screenshots and top image shown on a title&rsquo;s detail page in the eShop.
+Each screenshot is an upper + lower pair (the two 3DS screens). Upload images to
+&ldquo;Images / Assets&rdquo; first, then paste the URLs below.</p>
+<table>
+  <tr><th>Title</th><th>Top image</th><th>Screenshots</th><th></th></tr>
+  {% for t in titles %}
+  {% set c = counts.get(t.id, (0, 0, false)) %}
+  <tr>
+    <td>{{ t.name }}<div class="muted badge">{{ t.tid }}</div></td>
+    <td>{% if c[2] %}<span class="badge ok">Yes</span>{% else %}<span class="muted">&mdash;</span>{% endif %}</td>
+    <td>
+      {% if c[0] or c[1] %}
+        <span class="badge">{{ [c[0], c[1]]|max }} pair{{ '' if [c[0], c[1]]|max == 1 else 's' }}</span>
+        {% if c[0] != c[1] %}<span class="badge warn">upper/lower count differs</span>{% endif %}
+      {% else %}
+        <span class="muted">&mdash;</span>
+      {% endif %}
+    </td>
+    <td><a class="btn small" href="{{ url_for('ds_images', t=t.id) }}">Edit</a></td>
+  </tr>
+  {% else %}
+  <tr><td colspan="4" class="muted">No titles yet.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

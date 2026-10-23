@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block heading %}3DS &middot; Titles{% endblock %}
+{% block topactions %}<a class="btn primary" href="{{ url_for('ds_title_new') }}">New title</a>{% endblock %}
+{% block content %}
+<table>
+  <tr><th>TID</th><th>Name</th><th>Ver</th><th>Size</th><th>Price</th><th>Public</th><th>Owned</th><th></th></tr>
+  {% for t in items %}
+  {% set holders = owned.get(t.id, {}) %}
+  <tr>
+    <td class="mono">{{ t.tid }}</td>
+    <td>{{ t.name }}<div class="muted badge">{{ t.date }}</div></td>
+    <td class="mono">{{ '%08x'|format(t.version) }}</td>
+    <td>{{ t.size|human }}</td>
+    <td>{{ t.price }}</td>
+    <td>{{ 'Yes' if t.public else 'No' }}</td>
+    <td>
+      {% if holders %}
+        <span class="badge">{{ holders|length }} console{{ '' if holders|length == 1 else 's' }}</span>
+      {% else %}
+        <span class="muted">No</span>
+      {% endif %}
+    </td>
+    <td class="row">
+      <form method="post" action="{{ url_for('ds_title_owned', pk=t.id) }}">
+        <input type="hidden" name="next" value="{{ url_for('ds_titles') }}">
+        <input type="hidden" name="console" value="all">
+        {% if holders %}
+        <button class="btn small danger" name="grant" value="0"
+                onclick="return confirm('Revoke ownership for all consoles?')">Unown</button>
+        {% else %}
+        <button class="btn small primary" name="grant" value="1">Own</button>
+        {% endif %}
+      </form>
+      <a class="btn small" href="{{ url_for('ds_title_edit', pk=t.id) }}">Edit</a>
+      <a class="btn small" href="{{ url_for('ds_images', t=t.id) }}">Images</a>
+      <form method="post" action="{{ url_for('ds_title_delete', pk=t.id) }}" onsubmit="return confirm('Delete?')">
+        <button class="btn small danger">Delete</button>
+      </form>
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="8" class="muted">No titles yet. Use “Import CIA”.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

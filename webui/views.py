@@ -39,7 +39,11 @@ def title(request, tid):
     except ObjectDoesNotExist:
         wishlisted = False
     title.desc = title.desc.replace('\n', '<br>')
-    return render(request, "title.html", {"title": title.name, "WEBUI_NAME":WEBUI_NAME, "user": request.user, "app": title, "updates": updates, "wishlisted": wishlisted})
+    def _split_imgs(raw):
+        return [u.strip() for u in (raw or "").split(r" \ ") if u.strip()]
+    screenshots = _split_imgs(title.screenshot_merged_url) or (
+        _split_imgs(title.screenshot_upper_url) + _split_imgs(title.screenshot_lower_url))
+    return render(request, "title.html", {"title": title.name, "WEBUI_NAME":WEBUI_NAME, "user": request.user, "app": title, "updates": updates, "wishlisted": wishlisted, "screenshots": screenshots})
 
 def add_wishlist(request):
     id = request.GET.get("id")

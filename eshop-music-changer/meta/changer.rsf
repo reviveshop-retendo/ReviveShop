@@ -1,0 +1,18 @@
+BasicInfo:
+  Title                   : "eShop Music Changer"
+  ProductCode             : "CTR-RSMU"
+  Logo                    : Homebrew
+
+RomFs:
+  RootPath                : $(ROMFS_ROOT)
+
+TitleInfo:
+  Category                : Application
+  UniqueId                : 0xDAD01
+
+Option:
+  UseOnSD                 : true
+  FreeProductCode         : true
+  MediaFootPadding        : false
+  EnableCrypt             : false
+  EnableCompress          : true

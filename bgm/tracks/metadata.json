@@ -1,0 +1,50 @@
+[
+  {
+    "file": "track_11_-_eShop_-_May_2016.aac",
+    "name": "11 - eShop - May 2016",
+    "begin": "2016-05-01",
+    "data_size": 5269018,
+    "sample_rate": 32000,
+    "loop_end_frame": 10025984
+  },
+  {
+    "file": "track_12_-_eShop_-_May_2019.aac",
+    "name": "12 - eShop - May 2019",
+    "begin": "2019-05-01",
+    "data_size": 5409462,
+    "sample_rate": 32000,
+    "loop_end_frame": 10561536
+  },
+  {
+    "file": "track_2020-06_Original.aac",
+    "name": "June 2020 (original)",
+    "begin": "2020-06-01",
+    "data_size": 1143462,
+    "sample_rate": 32000,
+    "loop_end_frame": 3048448
+  },
+  {
+    "file": "track_14_-_eShop_-_September_2013.aac",
+    "name": "14 - eShop - September 2013",
+    "begin": "2026-09-01",
+    "data_size": 4866569,
+    "sample_rate": 32000,
+    "loop_end_frame": 9337856
+  },
+  {
+    "file": "track_September_2013_-_Nintendo_eShop_Music_-_.aac",
+    "name": "September 2013",
+    "begin": "2026-10-01",
+    "data_size": 4875938,
+    "sample_rate": 32000,
+    "loop_end_frame": 9335808
+  },
+  {
+    "file": "track_02_-_eShop_-_December_2013.aac",
+    "name": "02 - eShop - December 2013",
+    "begin": "2026-11-01",
+    "data_size": 4086043,
+    "sample_rate": 32000,
+    "loop_end_frame": 7859200
+  }
+]

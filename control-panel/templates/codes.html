@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Download codes / QR &middot; ReviveShop{% endblock %}
+{% block heading %}3DS &middot; Download codes / QR{% endblock %}
+{% block content %}
+<p class="muted" style="margin-top:0">Every redeemable code in one place. Scan a
+  QR to open the web redemption page, or type the 16-character code on the
+  console. The eShop keyboard cannot enter <b>I</b>, <b>O</b> or <b>Z</b>, so
+  codes never contain them.</p>
+
+<div class="grid2">
+  <div class="card">
+    <h3>New code</h3>
+    <form method="post" action="{{ url_for('ds_account_card') }}">
+      <div class="f" style="margin-bottom:10px"><label>Code (blank = generate)</label>
+        <input name="code" placeholder="auto-generated" maxlength="16"
+               pattern="[0-9A-HJ-NP-Ya-hj-np-y]*"
+               title="16 characters; the eShop keyboard cannot enter I, O or Z"></div>
+      <div class="f" style="margin-bottom:10px"><label>Type</label>
+        <select name="card_type" id="card_type" style="width:auto">
+          <option value="money">Money (adds Credit)</option>
+          <option value="application">Download code (grants a title)</option>
+        </select></div>
+      <div class="f" id="amount_row" style="margin-bottom:10px"><label>Value (Credit)</label>
+        <input name="amount" type="number" value="10000"></div>
+      <div class="f" id="title_row" style="margin-bottom:10px;display:none"><label>Title</label>
+        <select name="title_tid" style="width:auto">
+          {% for t in titles %}<option value="{{ t.tid }}">{{ t.name }} &middot; {{ t.tid }}</option>{% endfor %}
+        </select></div>
+      <button class="btn primary">Create code</button>
+    </form>
+  </div>
+  <div class="card">
+    <h3>How it works</h3>
+    <p class="muted">On the console: <b>eShop &rarr; Menu &rarr; Redeem a Download
+      Code</b>, then enter the code. Money codes are added through
+      <b>Add Funds &rarr; Redeem a Nintendo eShop Card</b>.</p>
+    <p class="muted"><b>3DS camera QR</b> uses the <span class="mono">ESHOP://</span>
+      scheme (the camera shows the eShop bag). It only opens the title's store
+      page &mdash; it does <b>not</b> redeem the code; the code must still be typed.</p>
+    <p class="muted" style="margin-bottom:0"><b>Phone QR</b> opens
+      <span class="mono">{{ web_base }}/ecommerce/add?card=&lt;code&gt;</span> &mdash;
+      the web redemption page (needs an account linked to the 3DS).</p>
+  </div>
+</div>
+
+<h3 style="margin-top:22px">All codes ({{ cards|length }})</h3>
+{% if not cards %}<p class="muted">No codes yet &mdash; create one above.</p>{% endif %}
+<div class="cards">
+  {% for card in cards %}
+  <div class="card">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <span class="pill {{ 'down' if card.used else 'up' }}">{{ 'used' if card.used else 'available' }}</span>
+      <span class="badge">{{ 'Money' if card.is_money else 'Download code' }}</span>
+    </div>
+    <div class="big mono" style="margin:10px 0 2px">{{ card.code }}</div>
+    <div class="muted" style="margin-bottom:10px">
+      {% if card.is_money %}{{ card.content }} Credit
+      {% else %}{{ title_names.get(card.content, card.content) }}{% endif %}
+    </div>
+    <div class="row" style="gap:12px;flex-wrap:wrap">
+      {% if card.is_money %}
+      <div>
+        <div class="badge" style="margin-bottom:4px">Phone &middot; web redeem</div>
+        <div style="background:#fff;border-radius:8px;padding:8px;display:inline-block">
+          <img src="{{ url_for('ds_account_card_qr', pk=card.id) }}" width="140" height="140"
+               alt="Web redeem QR for {{ card.code }}">
+        </div>
+      </div>
+      {% else %}
+      {% set esh = esh_links.get(card.content) %}
+      {% if esh %}
+      <div>
+        <div class="badge" style="margin-bottom:4px">3DS camera &middot; ESHOP://</div>
+        <div style="background:#fff;border-radius:8px;padding:8px;display:inline-block">
+          <img src="{{ url_for('ds_qr', data=esh) }}" width="140" height="140"
+               alt="ESHOP deep-link QR">
+        </div>
+      </div>
+      {% endif %}
+      <div>
+        <div class="badge" style="margin-bottom:4px">Phone &middot; web redeem</div>
+        <div style="background:#fff;border-radius:8px;padding:8px;display:inline-block">
+          <img src="{{ url_for('ds_account_card_qr', pk=card.id) }}" width="140" height="140"
+               alt="Web redeem QR for {{ card.code }}">
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+      <button type="button" class="btn small" onclick="copyCode(this, '{{ card.code }}')">Copy code</button>
+      {% if not card.is_money and esh_links.get(card.content) %}
+      <a class="btn small" href="{{ url_for('ds_qr', data=esh_links.get(card.content), dl=1) }}">Download 3DS QR</a>
+      {% endif %}
+      <a class="btn small" href="{{ url_for('ds_account_card_qr', pk=card.id, dl=1) }}">Download web QR</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+function copyCode(btn, code){
+  function done(ok){
+    btn.textContent = ok ? 'Copied!' : 'Press Ctrl+C';
+    if(ok) setTimeout(function(){ btn.textContent = 'Copy code'; }, 1500);
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(code).then(function(){ done(true); }, function(){ done(false); });
+  } else {
+    var t = document.createElement('textarea');
+    t.value = code; document.body.appendChild(t); t.select();
+    try { document.execCommand('copy'); done(true); } catch(e) { done(false); }
+    document.body.removeChild(t);
+  }
+}
+(function(){
+  var ct = document.getElementById('card_type');
+  var ar = document.getElementById('amount_row');
+  var tr = document.getElementById('title_row');
+  function sync(){ var m = ct.value === 'money'; ar.style.display = m ? '' : 'none'; tr.style.display = m ? 'none' : ''; }
+  ct.addEventListener('change', sync); sync();
+})();
+</script>
+{% endblock %}

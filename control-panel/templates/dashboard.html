@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block heading %}Dashboard{% endblock %}
+{% block content %}
+<div class="cards">
+  <div class="card">
+    <h3>Nintendo 3DS</h3>
+    {% if ds %}
+      <div class="big">{{ ds.titles }}</div><div class="muted">titles &middot; {{ ds.news }} news &middot; {{ ds.videos }} videos</div>
+    {% else %}
+      <div class="flash err" style="margin-top:8px">ORM unavailable: {{ ds_error }}</div>
+    {% endif %}
+    <div class="row" style="margin-top:10px">
+      {% for name, up in status['3ds'].items() %}
+        <span class="pill {{ 'up' if up else 'down' }}">{{ name }}</span>
+      {% endfor %}
+    </div>
+    <div class="row" style="margin-top:10px">
+      <a class="btn small" href="{{ url_for('ds_titles') }}">Titles</a>
+      <a class="btn small" href="{{ url_for('ds_import') }}">Import CIA</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Wii U</h3>
+    <div class="big">{{ wiiu_count }}</div><div class="muted">title folders</div>
+    <div class="row" style="margin-top:10px">
+      {% for name, up in status['wiiu'].items() %}
+        <span class="pill {{ 'up' if up else 'down' }}">{{ name }}</span>
+      {% endfor %}
+    </div>
+    <div class="row" style="margin-top:10px">
+      <a class="btn small" href="{{ url_for('wiiu') }}">Manage NUS</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Wii (WiiMart)</h3>
+    <div class="big">{{ wii_titles }}</div><div class="muted">shop titles</div>
+    <div class="row" style="margin-top:10px">
+      {% for name, up in status['wii'].items() %}
+        <span class="pill {{ 'up' if up else 'down' }}">{{ name }}</span>
+      {% endfor %}
+    </div>
+    <div class="row" style="margin-top:10px">
+      <a class="btn small" href="{{ url_for('wii') }}">Manage WiiMart</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>System</h3>
+    <div class="muted">Start / stop / restart any stack and view logs.</div>
+    <div class="row" style="margin-top:10px">
+      <a class="btn small" href="{{ url_for('services') }}">Services &amp; logs</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

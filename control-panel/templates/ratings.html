@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block heading %}3DS &middot; Ratings{% endblock %}
+{% block topactions %}
+{% if total_votes %}
+<form method="post" action="{{ url_for('ds_ratings_clear_all') }}"
+      onsubmit="return confirm('Delete ALL {{ total_votes }} votes?')">
+  <button class="btn danger">Clear all votes</button>
+</form>
+{% endif %}
+{% endblock %}
+{% block content %}
+<p class="muted">Star ratings from the console&rsquo;s &ldquo;Rate this title&rdquo; screen.
+One vote per console &mdash; voting again replaces the old vote. Scores feed the
+All Software chart and the star display on title pages. {{ total_votes }} vote{{ '' if total_votes == 1 else 's' }} total.</p>
+<table>
+  <tr><th>Title</th><th>Avg</th><th>1&#9733;</th><th>2&#9733;</th><th>3&#9733;</th><th>4&#9733;</th><th>5&#9733;</th><th></th></tr>
+  {% for r in rows %}
+  <tr>
+    <td>
+      {{ r.title.name }}
+      <div class="muted badge">{{ r.title.publisher.publisher_name if r.title.publisher else '' }}</div>
+      {% if r.votes %}
+      <details>
+        <summary class="muted" style="cursor:pointer">{{ r.count }} vote{{ '' if r.count == 1 else 's' }}</summary>
+        {% for v in r.votes %}
+        <div class="row" style="margin:4px 0;gap:8px;align-items:center">
+          <span class="mono badge">{{ v.client.consoleid if v.client else '?' }}</span>
+          <span>{{ v.q3 }}&#9733; &middot; age {{ v.age }} &middot; {{ v.gender }}</span>
+          <form method="post" action="{{ url_for('ds_rating_vote_delete', pk=v.id) }}"
+                onsubmit="return confirm('Delete this vote?')">
+            <button class="btn small danger">Delete</button>
+          </form>
+        </div>
+        {% endfor %}
+      </details>
+      {% endif %}
+    </td>
+    <td>{% if r.count %}<b>{{ '%.2f'|format(r.avg) }}</b>{% else %}<span class="muted">&mdash;</span>{% endif %}</td>
+    {% for c in r.stars %}<td>{{ c }}</td>{% endfor %}
+    <td>
+      {% if r.count %}
+      <form method="post" action="{{ url_for('ds_ratings_clear', pk=r.title.id) }}"
+            onsubmit="return confirm('Clear all votes for {{ r.title.name }}?')">
+        <button class="btn small">Clear</button>
+      </form>
+      {% endif %}
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="9" class="muted">No titles yet. Use &ldquo;Import CIA&rdquo;.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

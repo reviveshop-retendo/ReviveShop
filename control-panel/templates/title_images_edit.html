@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+{% block heading %}3DS &middot; Title images &middot; {{ img.title.name }}{% endblock %}
+{% block topactions %}
+<a class="btn" href="{{ url_for('ds_images') }}">&larr; All titles</a>
+<a class="btn" href="{{ url_for('ds_title_edit', pk=img.title.id) }}">Edit title</a>
+{% endblock %}
+{% block content %}
+
+{% if img.upper or img.lower %}
+<div class="card" style="max-width:820px;margin-bottom:1.2rem">
+  <h3>Current screenshots</h3>
+  {% set n = [img.upper|length, img.lower|length]|max %}
+  {% for i in range(n) %}
+  <div class="row" style="margin:6px 0;gap:10px;align-items:flex-start">
+    <span class="mono badge" style="min-width:24px">{{ i + 1 }}</span>
+    {% if i < img.upper|length %}
+      <img src="{{ img.upper[i] }}" alt="Upper {{ i + 1 }}" style="max-height:110px;border-radius:6px;border:1px solid var(--line)">
+    {% endif %}
+    {% if i < img.lower|length %}
+      <img src="{{ img.lower[i] }}" alt="Lower {{ i + 1 }}" style="max-height:110px;border-radius:6px;border:1px solid var(--line)">
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<form method="post" action="{{ url_for('ds_images_save') }}" style="max-width:820px">
+  <input type="hidden" name="t" value="{{ img.title.id }}">
+
+  {{ ui.image_field('top_image_url', 'Top image (hero banner on the title page)',
+                    img.top, preset='title_banner') }}
+
+  <div class="grid2">
+    <div class="f" style="margin-bottom:10px">
+      <label>Upper screens <span class="muted">(one URL per line)</span></label>
+      <textarea name="upper_urls" rows="8" placeholder="https://.../shot1_upper.jpg&#10;https://.../shot2_upper.jpg"
+        >{{ img.upper|join('\n') }}</textarea>
+    </div>
+    <div class="f" style="margin-bottom:10px">
+      <label>Lower screens <span class="muted">(one URL per line, same order)</span></label>
+      <textarea name="lower_urls" rows="8" placeholder="https://.../shot1_lower.jpg&#10;https://.../shot2_lower.jpg"
+        >{{ img.lower|join('\n') }}</textarea>
+    </div>
+  </div>
+  <p class="muted" style="margin:0 0 12px;font-size:12px">
+    Line 1 of upper pairs with line 1 of lower, and so on. Missing lines are sent
+    as a single-screen shot — the eShop handles that fine.
+  </p>
+
+  <button class="btn primary">Save</button>
+  <a class="btn" href="{{ url_for('ds_images') }}">Cancel</a>
+</form>
+{% endblock %}

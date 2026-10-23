@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sign in - ReviveShop Control Panel</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="login-wrap">
+  <form class="login" method="post">
+    <h1>ReviveShop</h1>
+    <p>Unified control panel &mdash; 3DS / Wii U / Wii</p>
+    {% if error %}<div class="flash err">{{ error }}</div>{% endif %}
+    <div class="f">
+      <label>Username</label>
+      <input name="username" autofocus autocomplete="username">
+    </div>
+    <div class="f">
+      <label>Password</label>
+      <input type="password" name="password" autocomplete="current-password">
+    </div>
+    <button class="btn primary" style="width:100%">Sign in</button>
+  </form>
+</div>
+</body>
+</html>

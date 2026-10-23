@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block heading %}Services &amp; Logs{% endblock %}
+{% block content %}
+{% set labels = {'3ds':'Nintendo 3DS','wiiu':'Wii U','wii':'Wii (WiiMart)'} %}
+{% set actions = {'3ds':['start','stop'], 'wiiu':['start','restart','stop'], 'wii':['start','restart','stop']} %}
+
+<div class="cards">
+  {% for stack, services in status.items() %}
+  <div class="card">
+    <h3>{{ labels[stack] }}</h3>
+    <div class="row" style="margin:8px 0">
+      {% for name, up in services.items() %}
+        <span class="pill {{ 'up' if up else 'down' }}">{{ name }}</span>
+      {% endfor %}
+    </div>
+    <div class="row">
+      {% for a in actions[stack] %}
+      <form method="post" action="{{ url_for('service_control', stack=stack, action=a) }}">
+        <button class="btn small {{ 'primary' if a=='start' }}">{{ a|capitalize }}</button>
+      </form>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<h3 style="margin-top:24px">Logs</h3>
+{% for name, text in logs.items() %}
+<details>
+  <summary class="mono">{{ name }}</summary>
+  <pre>{{ text }}</pre>
+</details>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block heading %}3DS &middot; Convert video &rarr; MOFLEX{% endblock %}
+{% block content %}
+<p class="muted">
+  Upload any video and it is encoded to a 3DS eShop <code>.moflex</code> with
+  <a href="https://github.com/quatric/mobipeg" target="_blank">mobipeg</a>,
+  hosted on this PC's asset CDN. Copy the resulting URL into a video entry
+  (or use the &ldquo;Create video entry&rdquo; button).
+</p>
+
+{% if not available %}
+<div class="flash err">mobipeg is not installed — expected
+  <code>tools/mobipeg/ffmpeg</code>.</div>
+{% endif %}
+
+<div class="grid2">
+  <div>
+    <h3>1. Encode</h3>
+    <form id="convform" onsubmit="return false;">
+      <div class="f" style="margin-bottom:10px">
+        <label>Video file</label>
+        <input type="file" name="file" accept="video/*" required>
+      </div>
+      <div class="row" style="margin-bottom:10px">
+        <div class="f"><label>Layout</label>
+          <select name="layout">
+            {% for key, L in layouts.items() %}
+            <option value="{{ key }}" {{ 'selected' if key=='2d' }}>{{ L.label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="f"><label>Quality</label>
+          <select name="quality">
+            <option value="high">High (QP16, bigger)</option>
+            <option value="normal" selected>Normal (QP22)</option>
+            <option value="small">Smaller (QP28)</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn primary" id="convbtn" {{ 'disabled' if not available }}
+              onclick="startConvert()">Convert to MOFLEX</button>
+      <a class="btn" href="{{ url_for('ds_videos') }}">Back to Videos</a>
+    </form>
+    <div id="convstatus" class="badge" style="margin-top:12px"></div>
+    <div id="converror" class="flash err" style="display:none"></div>
+  </div>
+
+  <div>
+    <h3>2. Result</h3>
+    <div id="result" style="display:none">
+      <div class="f" style="margin-bottom:10px">
+        <label>Hosted MOFLEX URL (paste this into the video form)</label>
+        <div class="row">
+          <input id="resurl" readonly style="flex:1" onclick="this.select()">
+          <button class="btn" onclick="copyUrl()">Copy</button>
+        </div>
+      </div>
+      <div class="muted" id="resmeta"></div>
+      <div class="row" style="margin-top:12px">
+        <a class="btn primary" id="createbtn" href="#">Create video entry</a>
+        <a class="btn" id="previewbtn" target="_blank">Download / preview</a>
+      </div>
+    </div>
+    <p class="muted" id="resempty">Nothing encoded yet.</p>
+  </div>
+</div>
+
+<script>
+var pollTimer = null;
+async function startConvert(){
+  var form = document.getElementById('convform');
+  var file = form.querySelector('[name="file"]').files[0];
+  if(!file){ alert('Choose a video first.'); return; }
+  var fd = new FormData();
+  fd.append('file', file);
+  fd.append('layout', form.querySelector('[name="layout"]').value);
+  fd.append('quality', form.querySelector('[name="quality"]').value);
+  document.getElementById('converror').style.display = 'none';
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('resempty').style.display = 'none';
+  document.getElementById('convbtn').disabled = true;
+  document.getElementById('convstatus').textContent = 'Uploading ' + file.name + '...';
+  try {
+    var r = await fetch('{{ url_for("convert_start") }}', {method:'POST', body: fd});
+    var j = await r.json();
+    if(!j.ok){ throw new Error(j.error); }
+    poll(j.id);
+  } catch(e) {
+    fail(e.message || String(e));
+  }
+}
+
+function poll(id){
+  clearInterval(pollTimer);
+  pollTimer = setInterval(async function(){
+    try {
+      var r = await fetch('{{ url_for("convert_status", job_id="__ID__") }}'.replace('__ID__', id));
+      var j = await r.json();
+      if(!j.ok) throw new Error(j.error);
+      document.getElementById('convstatus').textContent =
+        (j.message || j.status) + (j.status==='running' ? ' — this can take a while...' : '');
+      if(j.status === 'done'){ clearInterval(pollTimer); done(j); }
+      else if(j.status === 'error'){ clearInterval(pollTimer); fail(j.error || 'encoding failed'); }
+    } catch(e){ clearInterval(pollTimer); fail(e.message || String(e)); }
+  }, 2000);
+}
+
+function done(j){
+  document.getElementById('convbtn').disabled = false;
+  document.getElementById('convstatus').textContent = 'Done: ' + j.name;
+  document.getElementById('result').style.display = 'block';
+  document.getElementById('resurl').value = j.url;
+  document.getElementById('resmeta').textContent =
+    j.name + ' — ' + (j.human||'') + ', ' + (j.duration!=null ? j.duration + 's' : 'duration unknown');
+  document.getElementById('previewbtn').href = j.url;
+  var name = j.name.replace(/\.moflex$/, '');
+  var q = 'moflex_url=' + encodeURIComponent(j.url) +
+          '&name=' + encodeURIComponent(name) +
+          '&time_in_sec=' + encodeURIComponent(j.duration || '');
+  document.getElementById('createbtn').href = '{{ url_for("ds_videos") }}?' + q;
+}
+
+function fail(msg){
+  document.getElementById('convbtn').disabled = false;
+  document.getElementById('convstatus').textContent = '';
+  var el = document.getElementById('converror');
+  el.textContent = 'Error: ' + msg;
+  el.style.display = 'block';
+  document.getElementById('resempty').style.display = 'block';
+}
+
+function copyUrl(){
+  var i = document.getElementById('resurl');
+  i.select();
+  try { document.execCommand('copy'); } catch(e){}
+  if(navigator.clipboard) navigator.clipboard.writeText(i.value);
+}
+</script>
+{% endblock %}

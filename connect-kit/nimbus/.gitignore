@@ -1,0 +1,7 @@
+# build inputs / outputs
+code.bin
+build/
+out/
+patches/*/build/
+patches/*/out/
+patches/*/code.bin

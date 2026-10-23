@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}ReTendo accounts &middot; ReviveShop{% endblock %}
+{% block heading %}3DS &middot; ReTendo accounts{% endblock %}
+{% block content %}
+<p class="muted" style="margin-top:0">ReTendo is our Nintendo Network ID replacement
+  (<span class="mono">account.pretendo.cc</span>). Create an NNID here, then link it
+  to a console. The eShop answers account requests from this database; unknown
+  logins still fall back to the built-in dev account so nothing breaks.</p>
+
+<div class="grid2">
+  <div class="card">
+    <h3>New ReTendo ID</h3>
+    <form method="post" action="{{ url_for('ds_retendo_new') }}">
+      <div class="f" style="margin-bottom:10px"><label>User ID (NNID)</label>
+        <input name="user_id" maxlength="32" required></div>
+      <div class="f" style="margin-bottom:10px"><label>Password</label>
+        <input name="password" type="password" required></div>
+      <div class="f" style="margin-bottom:10px"><label>Email (optional)</label>
+        <input name="email" type="email"></div>
+      <div class="f" style="margin-bottom:10px"><label>Mii name (optional)</label>
+        <input name="mii_name" maxlength="20"></div>
+      <button class="btn primary">Create account</button>
+    </form>
+  </div>
+  <div class="card">
+    <h3>How linking works</h3>
+    <p class="muted">On the console, open <b>System Settings &rarr; Nintendo Network
+      ID Settings &rarr; Link an Existing ID</b> (or create one). The console opens
+      the account webview on this server at
+      <span class="mono">/v1/api/oauth20/authorize</span>; sign in here and the
+      console is linked.</p>
+    <p class="muted" style="margin-bottom:0">Accounts issue their own OAuth20 access,
+      refresh and service tokens. The web signup/login pages are also browsable at
+      <span class="mono">https://{{ request.host.split(':')[0] }}:8000/signup</span>
+      and <span class="mono">/login</span>.</p>
+  </div>
+</div>
+
+<h3 style="margin-top:22px">Accounts ({{ accounts|length }})</h3>
+{% if not accounts %}<p class="muted">No ReTendo IDs yet &mdash; create one above.</p>{% endif %}
+<div class="cards">
+  {% for a in accounts %}
+  <div class="card">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <span class="badge">NNID</span>
+      <span class="muted mono">pid {{ a.pid }}</span>
+    </div>
+    <div class="big mono" style="margin:10px 0 2px">{{ a.user_id }}</div>
+    <div class="muted" style="margin-bottom:10px">
+      {{ a.email or 'no email' }} &middot; Mii "{{ a.mii_name }}" &middot;
+      {{ a.country }}/{{ a.language }}
+    </div>
+
+    <div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      {% set acc_links = links | selectattr('account_id', 'equalto', a.id) | list %}
+      {% if acc_links %}
+        {% for l in acc_links %}
+        <span class="pill up">{{ l.console.consoleid }}
+          <form method="post" action="{{ url_for('ds_retendo_unlink', pk=l.id) }}"
+                style="display:inline">
+            <button class="btn small danger" title="Unlink">x</button>
+          </form>
+        </span>
+        {% endfor %}
+      {% else %}
+        <span class="muted">No console linked</span>
+      {% endif %}
+    </div>
+
+    <form method="post" action="{{ url_for('ds_retendo_link', pk=a.id) }}"
+          class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <select name="console_pk" style="width:auto">
+        {% for c in consoles %}<option value="{{ c.id }}">{{ c.consoleid }}</option>{% endfor %}
+      </select>
+      <button class="btn small">Link console</button>
+    </form>
+
+    <form method="post" action="{{ url_for('ds_retendo_password', pk=a.id) }}"
+          class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <input name="password" type="password" placeholder="new password" style="width:auto">
+      <button class="btn small">Set password</button>
+    </form>
+
+    <form method="post" action="{{ url_for('ds_retendo_delete', pk=a.id) }}"
+          onsubmit="return confirm('Delete ReTendo ID {{ a.user_id }} and its links?')">
+      <button class="btn small danger">Delete account</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

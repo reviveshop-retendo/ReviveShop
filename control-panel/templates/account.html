@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block heading %}3DS &middot; Account / Funds{% endblock %}
+{% block content %}
+<p class="muted">
+  Balances are per-console (<code>Client3DS.balance</code>) and shown on the 3DS
+  eShop as <strong>Credit</strong>. Add funds here, or hand out a redeemable card
+  code the console can redeem itself.
+</p>
+
+<h3>Consoles</h3>
+<table>
+  <tr><th>ID</th><th>Console ID</th><th>Region</th><th>Balance</th><th>Add funds</th></tr>
+  {% for c in consoles %}
+  <tr>
+    <td>{{ c.id }}</td>
+    <td>{{ c.consoleid }}<div class="muted badge">{{ c.uniquekey }}</div></td>
+    <td>{{ c.region }}/{{ c.country }}</td>
+    <td><strong>{{ c.balance }}</strong> Credit</td>
+    <td>
+      <form method="post" action="{{ url_for('ds_account_funds', pk=c.id) }}" class="row">
+        <input name="amount" type="number" value="10000" style="width:120px">
+        <select name="mode" style="width:auto">
+          <option value="add">+ Credit</option>
+          <option value="set">set to</option>
+        </select>
+        <button class="btn small primary">Apply</button>
+      </form>
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="5" class="muted">No consoles registered yet.</td></tr>
+  {% endfor %}
+</table>
+
+<h3 style="margin-top:24px">Redeemable cards</h3>
+<div class="grid2">
+  <div>
+    <p class="muted">Create a code, then redeem it on the console (or the web
+      account page) to add funds.</p>
+    <table>
+      <tr><th>Code</th><th>Value</th><th>Type</th><th>Used</th><th>QR</th><th></th></tr>
+      {% for card in cards %}
+      <tr>
+        <td><code>{{ card.code }}</code></td>
+        <td>{% if card.is_money %}{{ card.content }} Credit{% else %}{{ title_names.get(card.content, card.content) }}{% endif %}</td>
+        <td>{{ 'Money' if card.is_money else 'Download code' }}</td>
+        <td>{{ 'Yes' if card.used else 'No' }}</td>
+        <td><a href="{{ url_for('ds_account_card_qr', pk=card.id) }}" target="_blank">QR</a></td>
+        <td>
+          <form method="post" action="{{ url_for('ds_account_card_delete', pk=card.id) }}"
+                onsubmit="return confirm('Delete this card?')">
+            <button class="btn small danger">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="muted">No cards yet.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+  <div>
+    <h3>New card</h3>
+    <form method="post" action="{{ url_for('ds_account_card') }}">
+      <div class="f" style="margin-bottom:10px"><label>Code (blank = generate)</label>
+        <input name="code" placeholder="auto-generated" maxlength="16"
+               pattern="[0-9A-HJ-NP-Ya-hj-np-y]*"
+               title="16 characters; the eShop keyboard cannot enter I, O or Z"></div>
+      <div class="f" style="margin-bottom:10px"><label>Type</label>
+        <select name="card_type" id="card_type" style="width:auto">
+          <option value="money">Money (adds Credit)</option>
+          <option value="application">Download code (grants a title)</option>
+        </select></div>
+      <div class="f" id="amount_row" style="margin-bottom:10px"><label>Value (Credit)</label>
+        <input name="amount" type="number" value="10000"></div>
+      <div class="f" id="title_row" style="margin-bottom:10px;display:none"><label>Title</label>
+        <select name="title_tid" style="width:auto">
+          {% for t in titles %}<option value="{{ t.tid }}">{{ t.name }} &middot; {{ t.tid }}</option>{% endfor %}
+        </select></div>
+      <button class="btn primary">Create card</button>
+    </form>
+    <p class="muted" style="margin-top:10px">Codes are 16 characters and never use
+      <b>I</b>, <b>O</b> or <b>Z</b> (the 3DS keyboard can't type them). Every card
+      has a QR that opens
+      <code>{{ web_base }}/ecommerce/add?card=&lt;code&gt;</code> so a phone can
+      redeem it on the web.</p>
+    <script>
+      (function(){
+        var ct=document.getElementById('card_type');
+        var ar=document.getElementById('amount_row');
+        var tr=document.getElementById('title_row');
+        function sync(){var m=ct.value==='money';ar.style.display=m?'':'none';tr.style.display=m?'none':'';}
+        ct.addEventListener('change',sync);sync();
+      })();
+    </script>
+  </div>
+</div>
+{% endblock %}

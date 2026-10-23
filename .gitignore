@@ -127,3 +127,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+theme-shop-revival/node_modules/
+mkt/

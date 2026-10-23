@@ -35,6 +35,11 @@ urlpatterns = [
     path('my/tax_location', views.tax_location, name="taxloc"),
     path('my/transactions', views.transactions, name="transactions"),
     path('my/votes', views.votes, name="votes"),
-    path('my/votable_titles/!put', views.votable_titles, name="votable_titles"),
+    path('my/votes/!put', views.vote, name="votes_put"),
+    path('my/votes/!delete', views.vote_delete, name="votes_delete"),
+    path('my/votable_titles', views.votable_titles, name="votable_titles"),
+    path('my/votable_titles/!put', views.votable_titles, name="votable_titles_put"),
+    path('my/vote', views.vote, name="vote"),
+    path('my/vote/!put', views.vote, name="vote_put"),
     path('titles/id_pair', views.id_pair, name="id_pair"),
 ]

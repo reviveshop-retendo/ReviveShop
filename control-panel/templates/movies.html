@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+{% block heading %}3DS &middot; Videos{% endblock %}
+{% block topactions %}<a class="btn" href="{{ url_for('convert_page') }}">Convert a video &rarr;</a>{% endblock %}
+{% block content %}
+{% set p = prefill or {} %}
+<div class="grid2">
+  <div>
+    <h3>{% if edit %}Edit #{{ edit.id }}{% else %}New video{% endif %}</h3>
+    <form method="post" action="{% if edit %}{{ url_for('ds_video_edit', pk=edit.id) }}{% else %}{{ url_for('ds_videos') }}{% endif %}">
+      <div class="f" style="margin-bottom:10px"><label>Name</label>
+        <input name="name" required value="{{ edit.name if edit else p.get('name','') }}"></div>
+
+      <div class="f imgfield" style="margin-bottom:10px">
+        <label>Moflex video (.moflex)</label>
+        <div class="row">
+          <input id="moflex_url" name="moflex_url" value="{{ edit.moflex_url if edit else p.get('moflex_url','') }}"
+                 style="flex:1" placeholder="URL to a .moflex file — or upload one">
+          <input type="file" accept="video/*,.moflex" style="width:auto" onchange="uploadVideo(this)">
+        </div>
+        <div class="upstatus badge"></div>
+      </div>
+
+      <div class="row" style="margin-bottom:10px">
+        <div class="f"><label>Length (sec, auto)</label>
+          <input name="time_in_sec" type="number" value="{{ edit.time_in_sec if edit else p.get('time_in_sec','0') }}"></div>
+        <div class="f"><label>Release date</label>
+          <input type="date" name="date" value="{{ edit.date if edit else '' }}"></div>
+      </div>
+
+      {{ ui.image_field('thumbnail_url', 'Thumbnail image', edit.thumbnail_url if edit, preset='movie_thumb') }}
+      {{ ui.image_field('banner_url', 'Banner image', edit.banner_url if edit, preset='movie_banner') }}
+
+      <div class="f" style="margin-bottom:10px"><label>Description</label>
+        <textarea name="description" rows="3">{{ edit.description if edit and edit.description else '' }}</textarea></div>
+
+      <div class="row" style="margin-bottom:10px">
+        <div class="f"><label>Price (Credit)</label>
+          <input name="price" type="number" min="0" value="{{ edit.price if edit else 0 }}"></div>
+        <div class="f" style="align-self:flex-end">
+          <label><input type="checkbox" name="public" {{ 'checked' if (edit.public if edit else true) }}> Public / purchasable</label></div>
+      </div>
+
+      <div class="f" style="margin-bottom:10px"><label>Category</label>
+        <select name="category">
+          <option value="">--</option>
+          {% for c in cats %}<option value="{{ c.id }}" {{ 'selected' if edit and edit.category_id==c.id }}>{{ c.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="row" style="margin-bottom:12px">
+        <label><input type="checkbox" name="is_3d" {{ 'checked' if edit and edit.is_3d }}> 3D</label>
+        <label><input type="checkbox" name="new" {{ 'checked' if edit and edit.new }}> New</label>
+      </div>
+      <button class="btn primary">{% if edit %}Save{% else %}Create{% endif %}</button>
+      {% if edit %}<a class="btn" href="{{ url_for('ds_videos') }}">Cancel</a>{% endif %}
+    </form>
+  </div>
+  <div>
+    <h3>Videos ({{ items|length }})</h3>
+    <table>
+      <tr><th>ID</th><th>Name</th><th>Date</th><th>Price</th><th>3D</th><th></th></tr>
+      {% for v in items %}
+      <tr>
+        <td>{{ v.id }}</td>
+        <td>{{ v.name }}</td>
+        <td>{{ v.date }}</td>
+        <td>{{ v.price }}</td>
+        <td>{{ 'Yes' if v.is_3d else '-' }}</td>
+        <td class="row">
+          <a class="btn small" href="{{ url_for('ds_video_edit', pk=v.id) }}">Edit</a>
+          <form method="post" action="{{ url_for('ds_video_delete', pk=v.id) }}" onsubmit="return confirm('Delete?')">
+            <button class="btn small danger">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="muted">No videos yet.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+
+<script>
+async function uploadVideo(fileInput){
+  var f = fileInput.files && fileInput.files[0];
+  if(!f) return;
+  var field = fileInput.closest('.imgfield');
+  var status = field.querySelector('.upstatus');
+  status.textContent = 'Uploading ' + f.name + '...';
+  var fd = new FormData(); fd.append('file', f);
+  try {
+    var r = await fetch('{{ url_for("video_upload") }}', {method:'POST', body: fd});
+    var j = await r.json();
+    if(!j.ok){ status.textContent = 'Error: ' + j.error; return; }
+    field.querySelector('#moflex_url').value = j.url;
+    var n = document.querySelector('[name="name"]');
+    if(n && !n.value) n.value = f.name.replace(/\.[^.]+$/, '').slice(0, 25);
+    if(j.duration){ document.querySelector('[name="time_in_sec"]').value = j.duration; }
+    status.textContent = j.is_moflex
+      ? ('Hosted .moflex — ' + j.human + ', ' + (j.duration||'?') + 's')
+      : ('Hosted ' + j.human + ' — this is NOT .moflex, so the 3DS will not play it until it is encoded to moflex');
+  } catch(e) {
+    status.textContent = 'Upload failed: ' + e;
+  }
+}
+</script>
+{% endblock %}

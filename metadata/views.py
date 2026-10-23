@@ -151,7 +151,24 @@ def title(request, region, tid):
         demo = True
     else:
         demo = False
-    res = {"title": {"formal_name": title.name, "description": title.desc, "genres": {"genre": [{"name": title.genre.name, "id": title.genre.id}], "length": 1}, "keywords": {}, "ticket_available": title.ticket_available, "title_size": title.size, "download_code_sales": False, "download_card_sales": {"available": False}, "name": title.name, "thumbnails": {"thumbnail": [{"url": title.thumbnail_url, "height": 112, "width": 112, "type": "small"}]}, "id": title.id, "platform": {"name": title.platform.name, "id": title.platform.id, "device": "CTR", "category": title.genre.id }, "publisher": {"name": title.publisher.publisher_name, "id": title.publisher.id}, "product_code": title.product_code, "icon_url": title.icon_url, "banner_url": title.banner_url, "display_genre": title.genre.name, "release_date_on_eshop": str(title.date), "retail_sales": False, "eshop_sales": is_downloadable, "web_sales": is_downloadable, "demo_available": demo, "aoc_available": False, "in_app_purchase": title.in_app_purchase, "new": title.new, "public": title.public}}
+    res = {"title": {"formal_name": title.name, "description": title.desc, "genres": {"genre": [{"name": title.genre.name, "id": title.genre.id}], "length": 1}, "keywords": {}, "ticket_available": title.ticket_available, "title_size": title.size, "download_code_sales": False, "download_card_sales": {"available": False}, "name": title.name, "thumbnails": {"thumbnail": [{"url": title.thumbnail_url, "height": 112, "width": 112, "type": "small"}]}, "id": title.id, "platform": {"name": title.platform.name, "id": title.platform.id, "device": "CTR", "category": title.genre.id }, "publisher": {"name": title.publisher.publisher_name, "id": title.publisher.id}, "product_code": title.product_code, "icon_url": title.icon_url, "banner_url": title.banner_url, "display_genre": title.genre.name, "release_date_on_eshop": str(title.date), "retail_sales": title.retail_sales, "eshop_sales": is_downloadable, "web_sales": is_downloadable, "demo_available": demo, "aoc_available": False, "in_app_purchase": title.in_app_purchase, "new": title.new, "public": title.public}}
+    res["title"]["star_rating_info"] = _star_info(title)
+    # Every other title-shaped payload in this file (directory, ranking) carries
+    # rating_info; the detail view was the only one omitting it, so the console
+    # got a title object with no rating key at all on the purchase screen.
+    # age 0 = "Everyone", which always satisfies the session's age check.
+    res["title"]["rating_info"] = {
+        "rating_system": {"name": None, "id": None},
+        "rating": {
+            "icons": [
+                {"url": None, "type": "normal"},
+                {"url": None, "type": "small"}
+            ],
+            "name": None,
+            "age": 0
+        }
+    }
+    _apply_title_images(res["title"], title)
     if demo:
         res["title"]["demo_titles"] = {"demo_title": [{"name": title.demo.name, "id": title.demo.id, "icon_url": title.demo.icon_url}]}
     return JsonResponse(res)
@@ -355,6 +372,65 @@ def movies_content(request, region):
     res = {"contents": {"content": all_movies, "length": len(all_movies), "offset": int(request.GET.get("offset")), "total": total}}
     return JsonResponse(res)
 
+def _star_info(title):
+    """Star breakdown for one title. q3 is the 1-5 score as a string."""
+    stars = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+    total = 0
+    total_score = 0
+    for v in title.vote_set.all():
+        try:
+            s = int(float(v.q3))
+        except (TypeError, ValueError):
+            continue
+        if s < 1 or s > 5:
+            continue
+        stars[s] += 1
+        total += 1
+        total_score += s
+    avg = round(total_score / total, 2) if total else 0
+    return {
+        "score": str(avg),
+        "votes": total,
+        "star1": stars[1],
+        "star2": stars[2],
+        "star3": stars[3],
+        "star4": stars[4],
+        "star5": stars[5],
+    }
+
+
+# Title images: upper/lower screenshot pairs stored as " \ "-separated URL
+# lists (same convention as other shopdeck forks), eShop detail JSON shape:
+#   "screenshots": {"screenshot": [{"image_url": [
+#       {"value": url, "type": "upper"}, {"value": url, "type": "lower"}]}]}
+def _split_img_list(raw):
+    if not raw:
+        return []
+    return [u.strip() for u in raw.split(r" \ ") if u.strip()]
+
+
+def _screenshot_info(title):
+    shots = []
+    upper = _split_img_list(title.screenshot_upper_url)
+    lower = _split_img_list(title.screenshot_lower_url)
+    for i in range(max(len(upper), len(lower))):
+        image_url = []
+        if i < len(upper):
+            image_url.append({"value": upper[i], "type": "upper"})
+        if i < len(lower):
+            image_url.append({"value": lower[i], "type": "lower"})
+        if image_url:
+            shots.append({"image_url": image_url})
+    return shots
+
+
+def _apply_title_images(res_title, title):
+    shots = _screenshot_info(title)
+    res_title["screenshots"] = {"screenshot": shots}
+    if title.top_image_url:
+        res_title["top_image"] = {"type": "screenshot", "url": title.top_image_url}
+
+
 #This need to be checked a bit
 @csrf_exempt
 def rankings(request, region):
@@ -389,16 +465,21 @@ def rankings(request, region):
     return JsonResponse(res)
 @csrf_exempt
 def ranking(request, region, rid):
-    titles_with_votes = Title.objects.annotate(
-        total_votes=Count('vote'),
-        avg_score=Avg('vote__q3')
-    ).order_by('-avg_score', '-total_votes')
+    region_initial = (region or "US").upper()[:2]
+    titles_with_votes = list(Title.objects.filter(public=True)
+                             .select_related("publisher", "genre", "platform")
+                             .prefetch_related("vote_set"))
+
+    rows = []
+    for title in titles_with_votes:
+        info = _star_info(title)
+        rows.append((title, int(info["votes"]), float(info["score"]), info))
+
+    # Most-loved first: high average, then more votes, then name.
+    rows.sort(key=lambda r: (-r[2], -r[1], (r[0].name or "").lower()))
 
     ranking_list = []
-    for i, title in enumerate(titles_with_votes, start=1): 
-        total_votes = title.total_votes
-        avg_score = round(title.avg_score or Decimal('0.00'), 2)
-
+    for i, (title, total_votes, avg_score, star_info) in enumerate(rows, start=1):
         is_downloadable = not title.is_not_downloadable
         demo = title.demo is not None
 
@@ -408,43 +489,29 @@ def ranking(request, region, rid):
             "device": "CTR"
         }
 
-        rating_system_name = title.parentalControl.parental_system_name if title.parentalControl else None
-        rating_system_id = title.parentalControl.id if title.parentalControl else None
-        rating_icons = [
-            {"url": title.parentalControl.icon_url_normal, "type": "normal"} if title.parentalControl else None,
-            {"url": title.parentalControl.icon_url_small, "type": "small"} if title.parentalControl else None
-        ]
-        rating_name = title.parentalControl.age_name if title.parentalControl else None
-        rating_age = title.parentalControl.age_number if title.parentalControl else None
-
         ranking_list.append({
             "title": {
                 "platform": platform_data,
                 "publisher": {
-                    "name": title.publisher.publisher_name,
-                    "id": title.publisher.id
+                    "name": title.publisher.publisher_name if title.publisher else None,
+                    "id": title.publisher.id if title.publisher else None
                 },
-                "display_genre": title.genre.name,
+                "display_genre": title.genre.name if title.genre else None,
                 "rating_info": {
                     "rating_system": {
-                        "name": rating_system_name,
-                        "id": rating_system_id
+                        "name": None,
+                        "id": None
                     },
                     "rating": {
-                        "icons": rating_icons,
-                        "name": rating_name,
-                        "age": rating_age
+                        "icons": [
+                            {"url": None, "type": "normal"},
+                            {"url": None, "type": "small"}
+                        ],
+                        "name": None,
+                        "age": None
                     }
                 },
-                "star_rating_info": {
-                    "score": str(avg_score),
-                    "votes": total_votes,
-                    "star1": 0,
-                    "star2": 0,
-                    "star3": 0,
-                    "star4": 0,
-                    "star5": 0
-                },
+                "star_rating_info": star_info,
                 "release_date_on_eshop": str(title.date),
                 "retail_sales": False,
                 "eshop_sales": is_downloadable,
@@ -452,7 +519,7 @@ def ranking(request, region, rid):
                 "aoc_available": False,
                 "in_app_purchase": title.in_app_purchase,
                 "release_date_on_original": str(title.date),
-                "name": "• " + title.region.initial + " • " + "\n" + title.name,
+                "name": "• " + region_initial + " • " + "\n" + title.name,
                 "id": title.id,
                 "product_code": title.product_code,
                 "icon_url": title.icon_url,

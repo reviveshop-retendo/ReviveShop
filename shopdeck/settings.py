@@ -130,10 +130,10 @@ SOAP_URL = "soap.example.com"
 METADATA_API_URL = "api.example.com"
 
 # TOS
-TOS_ESHOP = "This is YOUR own custom shop!\nStart customizing it!\n(change this message in shopdeck/settings.py)"
+TOS_ESHOP = "Welcome to ReviveShop!\nThis is a Nintendo eShop Revival made possible by @TheCatlinKids2 On YouTube.\nIf you want to Subscribe to the Offical ReviveShop Youtube Search Up:\n@ReviveShopRetendo\nThank You For Contributing to Testing ReviveShop v.0.9"
 
 #Maintenance Message
-MAINTENANCE_MSG = "Maintenance message."
+MAINTENANCE_MSG = "Sorry, We are under Maintenance. This either means we are adding more games or just fixing a bug."
 
 # Enable if maintenance is necessary
 IN_MAINTENANCE = False

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}ReviveShop Control Panel{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">ReviveShop <small>Control Panel</small></div>
+    <a href="{{ url_for('dashboard') }}" class="{{ 'active' if active=='dashboard' }}">Dashboard</a>
+
+    <div class="navgroup">Nintendo 3DS</div>
+    <a href="{{ url_for('ds_news') }}" class="{{ 'active' if active=='news' }}">News / Announcements</a>
+    <a href="{{ url_for('ds_spotpass') }}" class="{{ 'active' if active=='spotpass' }}">SpotPass notifications</a>
+    <a href="{{ url_for('ds_meta', model_name='motd') }}" class="{{ 'active' if active=='ticker' }}">Home ticker (telops)</a>
+    <a href="{{ url_for('ds_videos') }}" class="{{ 'active' if active=='videos' }}">Videos</a>
+    <a href="{{ url_for('convert_page') }}" class="{{ 'active' if active=='convert' }}">Convert video</a>
+    <a href="{{ url_for('ds_music') }}" class="{{ 'active' if active=='music' }}">Music (BGM)</a>
+    <a href="{{ url_for('ds_titles') }}" class="{{ 'active' if active=='titles' }}">Titles</a>
+    <a href="{{ url_for('ds_owned') }}" class="{{ 'active' if active=='owned' }}">Owned titles</a>
+    <a href="{{ url_for('ds_import') }}" class="{{ 'active' if active=='import' }}">Import CIA</a>
+    <a href="{{ url_for('cia_library') }}" class="{{ 'active' if active=='cias' }}">CIA library</a>
+    <a href="{{ url_for('ds_cdn') }}" class="{{ 'active' if active=='cdn' }}">Content (CDN)</a>
+    <a href="{{ url_for('assets') }}" class="{{ 'active' if active=='assets' }}">Images / Assets</a>
+    <a href="{{ url_for('assets_resize') }}" class="{{ 'active' if active=='resize' }}">Image resizer</a>
+    <a href="{{ url_for('ds_meta', model_name='category') }}" class="{{ 'active' if active=='meta' }}">Store metadata</a>
+    <a href="{{ url_for('ds_consoles') }}" class="{{ 'active' if active=='consoles' }}">Consoles</a>
+    <a href="{{ url_for('ds_account') }}" class="{{ 'active' if active=='account' }}">Account / Funds</a>
+    <a href="{{ url_for('ds_codes') }}" class="{{ 'active' if active=='codes' }}">Download codes / QR</a>
+    <a href="{{ url_for('ds_ratings') }}" class="{{ 'active' if active=='ratings' }}">Ratings</a>
+    <a href="{{ url_for('ds_images') }}" class="{{ 'active' if active=='images' }}">Title images</a>
+    <a href="{{ url_for('ds_retendo') }}" class="{{ 'active' if active=='retendo' }}">ReTendo accounts</a>
+
+    <div class="navgroup">Wii U</div>
+    <a href="{{ url_for('wiiu') }}" class="{{ 'active' if active=='wiiu' }}">NUS / Titles</a>
+
+    <div class="navgroup">Wii</div>
+    <a href="{{ url_for('wii') }}" class="{{ 'active' if active=='wii' }}">WiiMart</a>
+
+    <div class="navgroup">System</div>
+    <a href="{{ url_for('services') }}" class="{{ 'active' if active=='services' }}">Services &amp; Logs</a>
+    <a href="{{ url_for('maintenance') }}" class="{{ 'active' if active=='maintenance' }}">Maintenance</a>
+    <a href="{{ url_for('logout') }}">Sign out</a>
+  </aside>
+  <div class="main">
+    <div class="topbar">
+      <h1>{% block heading %}ReviveShop Control Panel{% endblock %}</h1>
+      <div class="row">
+        {% block topactions %}{% endblock %}
+      </div>
+    </div>
+    <div class="content">
+      {% with msgs = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in msgs %}
+          <div class="flash {{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+</div>
+<script>
+// Upload an image to the asset CDN and drop its URL into the field named
+// `target`. Used by the image fields throughout the panel.
+async function uploadImage(fileInput, target){
+  var f = fileInput.files && fileInput.files[0];
+  if(!f) return;
+  var field = fileInput.closest('.imgfield') || fileInput.parentElement;
+  var status = field.querySelector('.upstatus');
+  if(status) status.textContent = 'Uploading ' + f.name + '...';
+  var fd = new FormData();
+  fd.append('file', f);
+  if(fileInput.dataset && fileInput.dataset.preset) fd.append('preset', fileInput.dataset.preset);
+  try {
+    var r = await fetch('{{ url_for("asset_upload") }}', {method:'POST', body: fd});
+    var j = await r.json();
+    if(!j.ok){ if(status) status.textContent = 'Error: ' + j.error; return; }
+    var input = field.querySelector('[name="'+target+'"]') || document.querySelector('[name="'+target+'"]');
+    if(input) input.value = j.url;
+    var img = field.querySelector('[data-preview]');
+    if(img){ img.src = j.preview; img.style.display = 'block'; }
+    if(status) status.textContent = (j.resized ? 'Resized ' + j.resized + ' -> ' : 'Uploaded -> ') + j.url;
+  } catch(e) {
+    if(status) status.textContent = 'Upload failed: ' + e;
+  }
+}
+</script>
+</body>
+</html>

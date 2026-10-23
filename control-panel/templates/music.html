@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block heading %}3DS &middot; Music (BGM){% endblock %}
+{% block content %}
+<p class="muted">The eShop plays the track whose <b>Begin</b> date is the most
+recent one already reached; the next track in order is served as BGM2. Set a
+track's date to today (or earlier, newest) to make it play now.</p>
+
+<div class="grid2">
+  <div>
+    <h3>Add a track</h3>
+    {% if not available %}
+      <div class="flash err">ffmpeg was not found, so uploads cannot be converted.</div>
+    {% endif %}
+    <form method="post" action="{{ url_for('ds_music_upload') }}" enctype="multipart/form-data">
+      <div class="f" style="margin-bottom:10px"><label>Audio file (mp3 / aac / wav / m4a …)</label>
+        <input type="file" name="file" accept="audio/*,.mp3,.aac,.m4a,.wav,.flac,.ogg" required></div>
+      <div class="f" style="margin-bottom:10px"><label>Name (optional)</label>
+        <input name="name" placeholder="eShop theme"></div>
+      <div class="f" style="margin-bottom:10px"><label>Begin date (optional, default today)</label>
+        <input type="date" name="begin"></div>
+      <button class="btn primary" {{ 'disabled' if not available }}>Upload &amp; convert to 32&nbsp;kHz AAC</button>
+    </form>
+  </div>
+  <div>
+    <h3>Tracks ({{ items|length }})</h3>
+    <table>
+      <tr><th></th><th>Name / Begin</th><th>Size</th><th></th></tr>
+      {% for t in items %}
+      <tr>
+        <td>{% if t.is_current %}<span class="badge">NOW</span>
+            {% elif t.is_next %}<span class="badge">NEXT</span>{% endif %}</td>
+        <td>
+          <form method="post" action="{{ url_for('ds_music_save', file=t.file) }}" class="row">
+            <input name="name" value="{{ t.name }}" style="flex:1;min-width:120px">
+            <input type="date" name="begin" value="{{ t.begin }}" style="width:auto">
+            <button class="btn small primary">Save</button>
+          </form>
+          <div class="muted" style="font-size:12px">{{ t.file }}{% if not t.exists %} &mdash; <span style="color:#e66">file missing</span>{% endif %}</div>
+        </td>
+        <td>{{ t.human }}</td>
+        <td>
+          <form method="post" action="{{ url_for('ds_music_delete', file=t.file) }}"
+                onsubmit="return confirm('Delete {{ t.file }}?')">
+            <button class="btn small danger">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="muted">No tracks registered.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+{% endblock %}

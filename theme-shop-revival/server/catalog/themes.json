@@ -1,0 +1,22 @@
+{
+	"shopId": "dMtiFHzm5OOf0y2O",
+	"categories": [
+		{
+			"listId": "5180",
+			"themes": ["00000001"]
+		}
+	],
+	"themes": {
+		"00000001": {
+			"name": "Revival Placeholder",
+			"price": null,
+			"added": "20261017000000",
+			"file": null,
+			"boss": {
+				"programId": "0x0004003000008f02",
+				"contentDatatype": 65537,
+				"nsDataId": 1
+			}
+		}
+	}
+}

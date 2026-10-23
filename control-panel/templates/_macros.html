@@ -1,0 +1,13 @@
+{% macro image_field(name, label, value='', hint='', preset='') %}
+<div class="f imgfield" style="margin-bottom:10px">
+  <label>{{ label }}{% if preset %} <span class="muted">(auto-resized to eShop size)</span>{% endif %}</label>
+  <div class="row">
+    <input name="{{ name }}" value="{{ value or '' }}" style="flex:1" placeholder="{{ hint or 'URL or upload an image' }}">
+    <input type="file" accept="image/*" style="width:auto" data-preset="{{ preset }}"
+           onchange="uploadImage(this,'{{ name }}')">
+  </div>
+  <div class="upstatus badge"></div>
+  <img data-preview src="{{ value or '' }}" alt=""
+       style="display:{{ 'block' if value else 'none' }};max-height:90px;margin-top:6px;border-radius:6px;border:1px solid var(--line)">
+</div>
+{% endmacro %}

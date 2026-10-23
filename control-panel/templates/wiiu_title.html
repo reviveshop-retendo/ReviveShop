@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block heading %}Wii U &middot; {{ d.kind }}/{{ d.tid }}{% endblock %}
+{% block topactions %}<a class="btn" href="{{ url_for('wiiu') }}">Back</a>{% endblock %}
+{% block content %}
+<div class="card" style="margin-bottom:16px">
+  <p class="muted mono">{{ d.path }}</p>
+  <form method="post" enctype="multipart/form-data" class="row" style="align-items:center">
+    <input type="file" name="files" multiple style="max-width:460px">
+    <button class="btn primary">Upload</button>
+  </form>
+</div>
+
+<table>
+  <tr><th>File</th><th>Size</th><th></th></tr>
+  {% for f in d.files %}
+  <tr>
+    <td class="mono">{{ f.name }}</td>
+    <td>{{ f.human }}</td>
+    <td>
+      <form method="post" action="{{ url_for('wiiu_file_delete') }}" onsubmit="return confirm('Delete file?')">
+        <input type="hidden" name="kind" value="{{ d.kind }}">
+        <input type="hidden" name="tid" value="{{ d.tid }}">
+        <input type="hidden" name="name" value="{{ f.name }}">
+        <button class="btn small danger">Delete</button>
+      </form>
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="3" class="muted">No files. Upload title.tmd / .app / .h3 etc.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

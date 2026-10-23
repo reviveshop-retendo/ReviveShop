@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block heading %}3DS &middot; Image resizer{% endblock %}
+{% block content %}
+<p class="muted">
+  Resize any image to the exact sizes the 3DS eShop expects, then copy the
+  hosted URL into a category, title or video field. Output lands on the asset
+  CDN served to consoles.
+</p>
+
+<div class="grid2">
+  <div>
+    <form id="rzform" onsubmit="return false;">
+      <div class="f" style="margin-bottom:10px"><label>Image</label>
+        <input type="file" name="file" accept="image/*" required onchange="previewLocal(this)"></div>
+
+      <div class="f" style="margin-bottom:10px"><label>Preset</label>
+        <select name="preset" onchange="applyPreset(this)">
+          {% for key, p in presets.items() %}
+          <option value="{{ key }}" data-w="{{ p[0] }}" data-h="{{ p[1] }}">{{ p[2] }} ({{ p[0] }}x{{ p[1] }})</option>
+          {% endfor %}
+          <option value="custom" selected>Custom…</option>
+        </select>
+      </div>
+
+      <div class="row" style="margin-bottom:10px">
+        <div class="f"><label>Width</label><input name="width" type="number" value="128"></div>
+        <div class="f"><label>Height</label><input name="height" type="number" value="96"></div>
+      </div>
+
+      <div class="row" style="margin-bottom:10px">
+        <div class="f"><label>Fit</label>
+          <select name="mode">
+            <option value="cover">Cover (fill + crop)</option>
+            <option value="contain">Contain (fit + pad)</option>
+            <option value="stretch">Stretch</option>
+          </select>
+        </div>
+        <div class="f"><label>Background (pad)</label><input name="bg" type="text" value="#000000"></div>
+      </div>
+
+      <div class="row" style="margin-bottom:12px">
+        <div class="f"><label>Format</label>
+          <select name="fmt"><option value="png">PNG</option><option value="jpg">JPEG</option></select>
+        </div>
+        <div class="f"><label>JPEG quality</label><input name="quality" type="number" value="90"></div>
+      </div>
+
+      <button class="btn primary" id="rzbtn" onclick="doResize()">Resize &amp; host</button>
+      <a class="btn" href="{{ url_for('assets') }}">All assets</a>
+    </form>
+    <div id="rzstatus" class="badge" style="margin-top:12px"></div>
+    <div id="rzerror" class="flash err" style="display:none"></div>
+  </div>
+
+  <div>
+    <h3>Result</h3>
+    <img id="rzimg" style="max-width:100%;border-radius:8px;display:none;border:1px solid #2a2a33">
+    <div id="rzresult" style="display:none;margin-top:12px">
+      <div class="f" style="margin-bottom:10px">
+        <label>Hosted URL</label>
+        <div class="row">
+          <input id="rzurl" readonly style="flex:1" onclick="this.select()">
+          <button class="btn" onclick="copyRz()">Copy</button>
+        </div>
+      </div>
+      <div class="muted" id="rzmeta"></div>
+    </div>
+    <p class="muted" id="rzempty">Nothing resized yet.</p>
+  </div>
+</div>
+
+<script>
+function previewLocal(input){
+  var f = input.files && input.files[0];
+  if(!f) return;
+  var img = document.getElementById('rzimg');
+  img.src = URL.createObjectURL(f);
+  img.style.display = 'block';
+}
+function applyPreset(sel){
+  var o = sel.options[sel.selectedIndex];
+  if(o.dataset.w){
+    document.querySelector('[name="width"]').value = o.dataset.w;
+    document.querySelector('[name="height"]').value = o.dataset.h;
+  }
+}
+async function doResize(){
+  var form = document.getElementById('rzform');
+  var file = form.querySelector('[name="file"]').files[0];
+  if(!file){ alert('Choose an image first.'); return; }
+  var fd = new FormData();
+  fd.append('file', file);
+  ['width','height','mode','bg','fmt','quality'].forEach(function(n){
+    fd.append(n, form.querySelector('[name="'+n+'"]').value);
+  });
+  document.getElementById('rzerror').style.display = 'none';
+  document.getElementById('rzbtn').disabled = true;
+  document.getElementById('rzstatus').textContent = 'Resizing ' + file.name + '...';
+  try {
+    var r = await fetch('{{ url_for("assets_resize_upload") }}', {method:'POST', body: fd});
+    var j = await r.json();
+    if(!j.ok) throw new Error(j.error);
+    document.getElementById('rzstatus').textContent = 'Done: ' + j.name;
+    document.getElementById('rzresult').style.display = 'block';
+    document.getElementById('rzempty').style.display = 'none';
+    document.getElementById('rzurl').value = j.url;
+    document.getElementById('rzmeta').textContent = j.size + ' — ' + j.human;
+    var img = document.getElementById('rzimg');
+    img.src = j.preview + '?t=' + Date.now();
+    img.style.display = 'block';
+  } catch(e) {
+    var el = document.getElementById('rzerror');
+    el.textContent = 'Error: ' + (e.message || e);
+    el.style.display = 'block';
+    document.getElementById('rzstatus').textContent = '';
+  } finally {
+    document.getElementById('rzbtn').disabled = false;
+  }
+}
+function copyRz(){
+  var i = document.getElementById('rzurl');
+  i.select();
+  try { document.execCommand('copy'); } catch(e){}
+  if(navigator.clipboard) navigator.clipboard.writeText(i.value);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block heading %}3DS &middot; Consoles{% endblock %}
+{% block content %}
+<table>
+  <tr><th>ID</th><th>Console ID</th><th>Device cert</th><th>Region</th><th>Language</th>
+      <th>Balance</th><th>Terminated</th><th>Device token</th></tr>
+  {% for c in rows %}
+  <tr>
+    <td>{{ c.id }}</td>
+    <td class="mono">{{ c.consoleid }}</td>
+    <td class="mono">{{ c.devicecert_consoleid or '' }}</td>
+    <td>{{ c.region }}/{{ c.country }}</td>
+    <td>{{ c.language }}</td>
+    <td>{{ c.balance }}</td>
+    <td>{{ 'Yes' if c.is_terminated else 'No' }}</td>
+    <td class="mono badge">{{ c.devicetoken }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="8" class="muted">No consoles registered.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

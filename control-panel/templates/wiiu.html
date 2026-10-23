@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block heading %}Wii U &middot; NUS / Titles{% endblock %}
+{% block content %}
+<div class="card" style="margin-bottom:16px">
+  <div class="row" style="justify-content:space-between">
+    <div class="row">
+      {% for name, up in status.items() %}
+        <span class="pill {{ 'up' if up else 'down' }}">{{ name }}</span>
+      {% endfor %}
+    </div>
+    <div class="row">
+      {% for a in ['start','restart','stop'] %}
+      <form method="post" action="{{ url_for('wiiu_control', action=a) }}">
+        <button class="btn small {{ 'primary' if a=='start' }}">{{ a|capitalize }}</button>
+      </form>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h3>New title folder</h3>
+    <form method="post" action="{{ url_for('wiiu_title_new') }}" class="row" style="align-items:flex-end">
+      <div class="f"><label>Kind</label>
+        <select name="kind">{% for k in ['title','patch','aoc'] %}<option>{{ k }}</option>{% endfor %}</select>
+      </div>
+      <div class="f"><label>Title ID (16 hex)</label>
+        <input name="tid" required placeholder="00050000101c9b00" style="min-width:230px">
+      </div>
+      <button class="btn primary">Create</button>
+    </form>
+    <p class="muted" style="margin-bottom:0">Files land in
+      <span class="mono">wiiu-stack/SOAP/titles/wup/&lt;kind&gt;/&lt;tid&gt;/</span>.</p>
+  </div>
+
+  <div class="card">
+    <h3>ReviveNUSspli catalog ({{ catalog|length }})</h3>
+    <form method="post" action="{{ url_for('wiiu_catalog_add') }}" class="row" style="align-items:flex-end">
+      <div class="f"><label>TID</label><input name="tid" required style="min-width:200px"></div>
+      <div class="f"><label>Name</label><input name="name" required></div>
+      <button class="btn primary">Add</button>
+    </form>
+    <table style="margin-top:10px">
+      <tr><th>TID</th><th>Name</th><th></th></tr>
+      {% for e in catalog %}
+      <tr><td class="mono">{{ e.tid }}</td><td>{{ e.name }}</td>
+        <td><form method="post" action="{{ url_for('wiiu_catalog_remove') }}">
+          <input type="hidden" name="tid" value="{{ e.tid }}">
+          <button class="btn small danger">Remove</button></form></td></tr>
+      {% else %}
+      <tr><td colspan="3" class="muted">No catalog entries.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+
+<h3 style="margin-top:22px">Title folders</h3>
+{% for kind, items in titles.items() %}
+  <h4 style="margin-bottom:6px">{{ kind|capitalize }} ({{ items|length }})</h4>
+  <table style="margin-bottom:18px">
+    <tr><th>TID</th><th>Files</th><th>Size</th><th></th></tr>
+    {% for t in items %}
+    <tr>
+      <td class="mono">{{ t.tid }}</td>
+      <td>{% for f in t.files %}<div class="mono badge">{{ f.name }}</div>{% else %}<span class="muted">empty</span>{% endfor %}</td>
+      <td>{{ t.human }}</td>
+      <td class="row">
+        <a class="btn small" href="{{ url_for('wiiu_title', kind=kind, tid=t.tid) }}">Open</a>
+        <form method="post" action="{{ url_for('wiiu_title_delete', kind=kind, tid=t.tid) }}" onsubmit="return confirm('Delete folder and all files?')">
+          <button class="btn small danger">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4" class="muted">None.</td></tr>
+    {% endfor %}
+  </table>
+{% endfor %}
+{% endblock %}

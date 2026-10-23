@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block heading %}3DS &middot; Import CIA{% endblock %}
+{% block content %}
+<div class="card" style="max-width:720px">
+  <h3>Import a CIA into the content CDN</h3>
+  <p class="muted">Extracts <span class="mono">tmd.bin</span>, <span class="mono">title.tik</span> and the encrypted
+  contents <span class="mono">0000000X.app</span> into <span class="mono">cdn/&lt;title-id&gt;/</span>, and
+  creates/updates the matching store title. Large CIAs (400&nbsp;MB+) may take a minute.</p>
+  <form method="post" enctype="multipart/form-data" class="row" style="align-items:center">
+    <input type="file" name="cia" accept=".cia" required style="max-width:420px">
+    <button class="btn primary">Upload &amp; import</button>
+  </form>
+</div>
+
+{% if report %}
+<div class="card" style="margin-top:14px">
+  <h3>Import report</h3>
+  <table>
+    <tr><th>Title ID</th><td class="mono">{{ report.tid }}</td></tr>
+    <tr><th>Version</th><td class="mono">{{ '%08x'|format(report.version) }} ({{ report.version }})</td></tr>
+    <tr><th>Contents</th><td class="mono">{{ report.contents|join(', ') }}</td></tr>
+    <tr><th>Total size</th><td>{{ report.size|human }}</td></tr>
+    <tr><th>Product code</th><td class="mono">{{ report.product_code }}</td></tr>
+  </table>
+</div>
+{% endif %}
+
+<h3 style="margin-top:22px">Content CDN ({{ cdn|length }})</h3>
+<table>
+  <tr><th>Title ID</th><th>Files</th><th>Size</th></tr>
+  {% for f in cdn %}
+  <tr>
+    <td class="mono">{{ f.tid }}</td>
+    <td>
+      {% for file in f.files %}<div class="mono badge">{{ file.name }} &middot; {{ file.human }}</div>{% endfor %}
+    </td>
+    <td>{{ f.human }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="3" class="muted">CDN empty.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

@@ -1,0 +1,72 @@
+# ReviveShop Games Import Plan
+# For each entry, the data below is auto-extracted from Universal-DB pages
+
+## Falling Blocks Watch Out
+Link: https://db.universal-team.net/3ds/falling-blocks-watch-out
+Name: Falling Blocks Watch Out
+Publisher/Creator: Spaqin
+Category: Games
+Short Description: Falling Blocks Watch Out, a 3DS homebrew Tetris clone.
+Long Description: Falling Blocks Watch Out, a 3DS homebrew Tetris clone.
+Product Code: CTR-P-FBWO (from your installed CIA fbwo.cia)
+TID: 0004000000FA6500
+Source: https://github.com/Spaqin/fbwo-3ds
+Unique ID: 0xFA65
+Created: 2016-01-30
+License: (not specified)
+Stars: 12
+Artwork/Icon: https://db.universal-team.net/assets/images/images/falling-blocks-watch-out.png
+Notes: Installed CIA already imported/created as Falling Blocks Watch Out (CTR-P-FBWO, TID 0004000000FA6500). Exists in shop.
+
+## DrawAttack
+Link: https://db.universal-team.net/3ds/drawattack
+Name: DrawAttack
+Publisher/Creator: Thomas Edvalson
+Category: Games
+Short Description: Multiplayer drawing battle game for the Nintendo 3DS.
+Long Description: Multiplayer drawing battle game for the Nintendo 3DS.
+Product Code: DrawAttack (from installed CIA DrawAttack.cia)
+TID: 0004000000771800
+Source: https://github.com/Cruel/DrawAttack
+Unique ID: 0x7718
+Created: 2015-08-25
+License: MIT License
+Stars: 11
+Artwork/Icon/Banner: https://raw.githubusercontent.com/Cruel/DrawAttack/master/res/app/banner.png
+Notes: Installed CIA already imported/created. Exists in shop.
+
+## CS3DS
+Link: https://db.universal-team.net/3ds/cs3ds
+Name: CS3DS
+Publisher/Creator: Josh Huelsman
+Category: Games
+Short Description: CSPSP port for 3DS
+Long Description: CSPSP port for 3DS
+Product Code: (not specified on page) - need to determine from CIA if you provide it
+TID: (not listed) - from CIA Unique ID 0xF1BAD
+Source: https://github.com/machinamentum/CS3DS
+Unique ID: 0xF1BAD
+Created: 2016-04-14
+License: (not specified)
+Stars: 16
+Artwork/Icon: https://db.universal-team.net/assets/images/images/cs3ds.png
+Screenshots: https://db.universal-team.net/assets/images/screenshots/cs3ds/gameplay.png, https://db.universal-team.net/assets/images/screenshots/cs3ds/title-screen.png
+Notes: Pre-release v0.6-alpha (cia/3dsx available). TID not visible on page; will need CIA to import properly.
+
+## EDuke3D
+Link: https://db.universal-team.net/3ds/eduke3d
+Name: EDuke3D
+Publisher/Creator: Felipe Izzo
+Category: Games
+Short Description: Unofficial port of EDuke32 for the Nintendo 3DS
+Long Description: Unofficial port of EDuke32 for the Nintendo 3DS
+Product Code: (not specified) - need CIA
+TID: (not listed) - Unique ID 0xFF124
+Source: https://github.com/masterfeizz/EDuke3D
+Unique ID: 0xFF124
+Created: 2015-11-08
+License: GNU General Public License v2.0
+Stars: 55
+Artwork/Icon: https://db.universal-team.net/assets/images/images/eduke3d.png
+Notes: Pre-release v1.0-beta (cia/3dsx available). Need CIA to get exact TID/product code.
+

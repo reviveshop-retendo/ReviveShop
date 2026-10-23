@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block heading %}3DS &middot; CIA library{% endblock %}
+{% block content %}
+<p class="muted">
+  Upload a CIA once, then attach it here. Attaching extracts the real ticket and
+  the encrypted content into <span class="mono">cdn/&lt;tid&gt;/</span> and writes a
+  TMD that matches the bytes we serve &mdash; so <em>Verify</em> tells you up front
+  whether the CIA ships with a TMD that disagrees with its own content, which is
+  the usual reason a download fails verification.
+</p>
+
+<form method="post" enctype="multipart/form-data" action="{{ url_for('cia_library') }}" class="row" style="margin-bottom:1rem">
+  <input type="file" name="cia" accept=".cia" required>
+  <button class="btn primary">Upload CIA</button>
+</form>
+
+{% if report %}
+<div class="card" style="margin-bottom:1rem">
+  <h3>Last attach &middot; {{ report.title }}</h3>
+  <p class="mono">{{ report.tid }} &middot; version {{ '%08x'|format(report.version) }} &middot; {{ report.human }}</p>
+  <p>Ticket: {{ report.ticket }} bytes &middot; TMD verified: <strong>{{ 'yes' if report.verified else 'NO' }}</strong></p>
+  {% if report.stale %}
+  <p class="badge warn">TMD was stale for {{ report.stale|join(', ') }} &mdash; rebuilt from the actual content</p>
+  {% else %}
+  <p class="badge ok">CIA's own TMD already matched its content</p>
+  {% endif %}
+  <p class="muted mono">{{ report.path }}</p>
+</div>
+{% endif %}
+
+{% if verify %}
+<div class="card" style="margin-bottom:1rem">
+  <h3>Verify &middot; {{ verify.name }}</h3>
+  <p class="badge {{ 'ok' if verify.ok else 'warn' }}">
+    {{ 'TMD matches content' if verify.ok else 'TMD does NOT match content' }}
+  </p>
+  <table>
+    <tr><th>Content</th><th>Size</th><th>TMD hash</th><th>Actual hash</th></tr>
+    {% for r in verify.contents %}
+    <tr>
+      <td class="mono">{{ r.id }}</td>
+      <td>{{ r.size|human }}</td>
+      <td class="mono">{{ r.tmd_hash[:16] }}&hellip;</td>
+      <td class="mono">{{ r.real_hash[:16] }}&hellip; {{ 'match' if r.match else 'MISMATCH' }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+<table>
+  <tr><th>CIA</th><th>Title ID</th><th>Ver</th><th>Contents</th><th>Size</th><th></th></tr>
+  {% for c in cias %}
+  <tr>
+    <td>
+      {{ c.name }}
+      {% if c.error %}<div class="badge warn">unreadable: {{ c.error }}</div>{% endif %}
+    </td>
+    <td class="mono">{{ c.tid or '-' }}</td>
+    <td class="mono">{{ c.version or '-' }}</td>
+    <td>
+      {% if c.contents %}
+        {% for part in c.contents %}<span class="mono">{{ part.id }}</span>{% if not loop.last %}, {% endif %}{% endfor %}
+      {% else %}&mdash;{% endif %}
+    </td>
+    <td>{{ c.human }}</td>
+    <td class="row">
+      {% if not c.error %}
+      <form method="post" action="{{ url_for('cia_do_attach') }}">
+        <input type="hidden" name="name" value="{{ c.name }}">
+        <button class="btn small primary">Attach</button>
+      </form>
+      <form method="post" action="{{ url_for('cia_do_verify') }}">
+        <input type="hidden" name="name" value="{{ c.name }}">
+        <button class="btn small">Verify</button>
+      </form>
+      {% endif %}
+      <form method="post" action="{{ url_for('cia_do_delete') }}" onsubmit="return confirm('Delete this CIA?')">
+        <input type="hidden" name="name" value="{{ c.name }}">
+        <button class="btn small danger">Delete</button>
+      </form>
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="6" class="muted">No CIAs stored yet. Upload one above.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

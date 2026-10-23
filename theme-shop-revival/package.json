@@ -1,0 +1,17 @@
+{
+	"name": "theme-shop-revival",
+	"version": "0.1.0",
+	"description": "Self-hosted Nintendo 3DS Theme Shop revival server",
+	"type": "module",
+	"license": "MIT",
+	"scripts": {
+		"start": "node server/index.js",
+		"gen-certs": "node tools/gen-certs.js",
+		"extract-key": "node tools/extract-boss-key.js",
+		"test": "node --test tests/"
+	},
+	"dependencies": {
+		"@pretendonetwork/boss-crypto": "^1.2.2",
+		"express": "^5.1.0"
+	}
+}

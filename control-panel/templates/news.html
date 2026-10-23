@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+{% block heading %}3DS &middot; News / Announcements{% endblock %}
+{% block content %}
+<div class="grid2">
+  <div>
+    <h3>{% if edit %}Edit #{{ edit.id }}{% else %}New announcement{% endif %}</h3>
+    <form method="post" action="{% if edit %}{{ url_for('ds_news_edit', pk=edit.id) }}{% else %}{{ url_for('ds_news') }}{% endif %}">
+      <div class="f" style="margin-bottom:10px">
+        <label>Title</label>
+        <input name="title" required value="{{ edit.title if edit }}">
+      </div>
+      <div class="f" style="margin-bottom:10px">
+        <label>Content</label>
+        <textarea name="content" rows="6">{{ edit.content if edit }}</textarea>
+      </div>
+      {{ ui.image_field('banner_url', 'Banner image (300x126)', edit.banner_url if edit, preset='news_banner') }}
+      <label style="display:block;margin-bottom:12px">
+        <input type="checkbox" name="is_banner" {{ 'checked' if edit and edit.is_banner }}> Show as banner
+      </label>
+      <div class="row" style="gap:10px;margin-bottom:12px">
+        <div class="f" style="flex:1">
+          <label>Publish (blank = now)</label>
+          <input type="datetime-local" name="publish_date"
+                 value="{{ edit.publish_date.strftime('%Y-%m-%dT%H:%M') if edit and edit.publish_date else '' }}">
+        </div>
+        <div class="f" style="flex:1">
+          <label>Expire (blank = never)</label>
+          <input type="datetime-local" name="expire_date"
+                 value="{{ edit.expire_date.strftime('%Y-%m-%dT%H:%M') if edit and edit.expire_date else '' }}">
+        </div>
+      </div>
+      <button class="btn primary">{% if edit %}Save{% else %}Create{% endif %}</button>
+      {% if edit %}<a class="btn" href="{{ url_for('ds_news') }}">Cancel</a>{% endif %}
+    </form>
+  </div>
+  <div>
+    <h3>Published ({{ items|length }})</h3>
+    <table>
+      <tr><th>ID</th><th>Title</th><th>Status</th><th>Banner</th><th></th></tr>
+      {% for a in items %}
+      <tr>
+        <td>{{ a.id }}</td>
+        <td>{{ a.title }}<div class="muted badge">{{ a.date }}</div></td>
+        <td><span class="badge">{{ a.status }}</span></td>
+        <td>
+          {% if a.is_banner and a.banner_url %}
+          <img src="{{ a.banner_url }}" alt="" style="max-height:38px;border-radius:4px;border:1px solid var(--line)">
+          {% elif a.is_banner %}Yes{% else %}-{% endif %}
+        </td>
+        <td class="row">
+          <a class="btn small" href="{{ url_for('ds_news_edit', pk=a.id) }}">Edit</a>
+          <form method="post" action="{{ url_for('ds_news_delete', pk=a.id) }}" onsubmit="return confirm('Delete?')">
+            <button class="btn small danger">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="muted">No announcements yet.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+{% endblock %}
